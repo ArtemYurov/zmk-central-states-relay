@@ -44,7 +44,7 @@ Add to your `config/west.yml`:
 manifest:
   remotes:
     - name: central-states-relay
-      url-base: https://github.com/<your-username>
+      url-base: https://github.com/ArtemYurov
   projects:
     - name: zmk-central-states-relay
       remote: central-states-relay
