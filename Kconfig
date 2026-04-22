@@ -7,10 +7,6 @@ config ZMK_CENTRAL_STATES_RELAY
 	default $(dt_compat_enabled,$(DT_COMPAT_ZMK_CENTRAL_STATES_RELAY))
 	select ZMK_HID_INDICATORS if ZMK_SPLIT_ROLE_CENTRAL
 
-config ZMK_CENTRAL_STATES_RELAY_QUEUE_SIZE
-	int "Max number of central states events to queue"
-	default 5
-
 config CSR_RELAY_WPM
 	bool "Relay WPM data to peripheral"
 	default n

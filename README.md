@@ -33,7 +33,6 @@ struct zmk_central_states_changed {
 | Option | Default | Description |
 |--------|---------|-------------|
 | `CONFIG_ZMK_CENTRAL_STATES_RELAY` | auto (from DTS) | Master toggle, enabled by DTS compatible node |
-| `CONFIG_ZMK_CENTRAL_STATES_RELAY_QUEUE_SIZE` | 5 | Max queued events on peripheral side |
 | `CONFIG_CSR_RELAY_WPM` | n | Relay WPM to peripheral. Generates frequent BLE traffic during typing — disable to save power |
 
 ## Integration

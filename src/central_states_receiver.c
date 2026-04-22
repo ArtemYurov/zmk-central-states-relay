@@ -40,28 +40,20 @@ const char *csr_cache_get_layer_name(void) { return csr_cache.layer_name; }
 uint8_t csr_cache_get_mods(void) { return csr_cache.mods; }
 uint8_t csr_cache_get_wpm(void) { return csr_cache.wpm; }
 
-/* ---- Message queue + work ------------------------------------------------- */
+/* ---- Pending payload + work ----------------------------------------------- */
 
-K_MSGQ_DEFINE(csr_peripheral_msgq,
-              sizeof(struct zmk_central_states_changed),
-              CONFIG_ZMK_CENTRAL_STATES_RELAY_QUEUE_SIZE,
-              4);
-
+static struct zmk_central_states_changed pending_payload;
 static struct k_work csr_peripheral_work;
 
 static void csr_peripheral_work_cb(struct k_work *work) {
-    struct zmk_central_states_changed payload;
+    LOG_DBG("CSR peripheral: profile=%d flags=0x%02x battery=%d layer=%d",
+            pending_payload.active_profile,
+            pending_payload.flags,
+            pending_payload.central_battery,
+            pending_payload.active_layer);
 
-    while (k_msgq_get(&csr_peripheral_msgq, &payload, K_NO_WAIT) == 0) {
-        LOG_DBG("CSR peripheral: profile=%d flags=0x%02x battery=%d layer=%d",
-                payload.active_profile,
-                payload.flags,
-                payload.central_battery,
-                payload.active_layer);
-
-        csr_cache_update(&payload);
-        raise_zmk_central_states_changed(payload);
-    }
+    csr_cache_update(&pending_payload);
+    raise_zmk_central_states_changed(pending_payload);
 }
 
 /* GATT write handler — called from BT RX thread, must be fast */
@@ -75,18 +67,8 @@ static ssize_t split_svc_recv_central_states(struct bt_conn *conn,
         return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
     }
 
-    const struct zmk_central_states_changed *payload = buf;
-
-    LOG_DBG("CSR peripheral: write received profile=%d flags=0x%02x battery=%d",
-            payload->active_profile,
-            payload->flags,
-            payload->central_battery);
-
-    if (k_msgq_put(&csr_peripheral_msgq, payload, K_NO_WAIT) != 0) {
-        LOG_WRN("CSR peripheral: message queue full, dropping states update");
-    } else {
-        k_work_submit(&csr_peripheral_work);
-    }
+    memcpy(&pending_payload, buf, sizeof(pending_payload));
+    k_work_submit(&csr_peripheral_work);
 
     return len;
 }
